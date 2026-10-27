@@ -1,0 +1,11 @@
+{
+  "flowers": [
+    { "symbol": "sunflower", "label": "Sunflower", "emoji": "🌻" },
+    { "symbol": "rose", "label": "Rose", "emoji": "🌹" },
+    { "symbol": "tulip", "label": "Tulip", "emoji": "🌷" },
+    { "symbol": "sprout", "label": "Sprout", "emoji": "🌱" },
+    { "symbol": "wilted", "label": "Wilted", "emoji": "🥀" },
+    { "symbol": "daisy", "label": "Daisy", "emoji": "🌼" },
+    { "symbol": "generic", "label": "Generic", "emoji": "🌸" }
+  ]
+}

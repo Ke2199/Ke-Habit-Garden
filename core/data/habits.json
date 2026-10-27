@@ -1,0 +1,89 @@
+{
+  "habits": [
+    {
+      "id": 1,
+      "name": "Study 2 hours",
+      "target": "2 hours / day",
+      "flower_symbol": "sunflower",
+      "short": "study",
+      "streak": 21,
+      "best_streak": 21,
+      "growth": 100,
+      "bloom_threshold": 80,
+      "created_at": "2026-08-15",
+      "pos": {
+        "left": 18,
+        "top": 54
+      },
+      "archived": false
+    },
+    {
+      "id": 2,
+      "name": "Reading 30 min",
+      "target": "30 minutes",
+      "flower_symbol": "rose",
+      "short": "reading",
+      "streak": 20,
+      "best_streak": 21,
+      "growth": 90,
+      "bloom_threshold": 80,
+      "created_at": "2026-08-15",
+      "pos": {
+        "left": 42,
+        "top": 48
+      },
+      "archived": false
+    },
+    {
+      "id": 3,
+      "name": "Hydration 6 cups",
+      "target": "6 cups",
+      "flower_symbol": "tulip",
+      "short": "hydration",
+      "streak": 5,
+      "best_streak": 8,
+      "growth": 60,
+      "bloom_threshold": 80,
+      "created_at": "2026-08-15",
+      "pos": {
+        "left": 64,
+        "top": 56
+      },
+      "archived": false
+    },
+    {
+      "id": 4,
+      "name": "Exercise 30 min",
+      "target": "30 minutes",
+      "flower_symbol": "sprout",
+      "short": "exercise",
+      "streak": 2,
+      "best_streak": 4,
+      "growth": 30,
+      "bloom_threshold": 80,
+      "created_at": "2026-08-22",
+      "pos": {
+        "left": 30,
+        "top": 72
+      },
+      "archived": false
+    },
+    {
+      "id": 5,
+      "name": "Sleep 7 hours",
+      "target": "7 hours",
+      "flower_symbol": "wilted",
+      "short": "sleep",
+      "streak": 0,
+      "best_streak": 6,
+      "growth": 18,
+      "bloom_threshold": 80,
+      "created_at": "2026-08-20",
+      "pos": {
+        "left": 76,
+        "top": 68
+      },
+      "archived": false
+    }
+  ]
+}
