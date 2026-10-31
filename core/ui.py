@@ -5,6 +5,7 @@ a small card with that habit's details. List page is one card per habit
 with a checkbox for today's check-in.
 """
 import tkinter as tk
+from datetime import date, timedelta
 
 from PIL import ImageTk
 
@@ -217,6 +218,13 @@ class HabitGardenApp:
             self._card(grid, h).grid(row=i // 3, column=i % 3,
                                      padx=10, pady=10, sticky="n")
 
+        # button that opens the "new habit" form
+        new_button = tk.Label(self.container, text="+ New Habit",
+                              bg="white", fg=GREEN, padx=12, pady=6,
+                              font=("Helvetica", 11, "bold"))
+        new_button.pack(pady=8)
+        new_button.bind("<Button-1>", lambda e: self._new_habit_dialog())
+
         tk.Label(self.container,
                  text="Tick a habit to see the garden weather update.",
                  bg="#f8fafc", fg="#6b7280",
@@ -264,6 +272,13 @@ class HabitGardenApp:
         tk.Label(card, text=STAGE_NAME[habit.stage()], fg=fg, bg=bg,
                  font=("Helvetica", 9, "bold"),
                  padx=8, pady=2).pack(padx=14, anchor="w")
+
+        # small "History" link at the bottom-right of the card
+        history = tk.Label(card, text="History", bg="white",
+                           fg="#6b7280", font=("Helvetica", 9))
+        history.pack(padx=14, pady=(0, 10), anchor="e")
+        history.bind("<Button-1>",
+                     lambda e, h=habit: self._history_dialog(h))
         return card
 
     # ---------- actions ----------
@@ -274,6 +289,165 @@ class HabitGardenApp:
             self.repo.uncheck(habit.id)
         else:
             self.repo.check_in(habit.id)
+        self.refresh()
+
+    # ---------- dialogs ----------
+
+    # open a small window to type in a new habit
+    def _new_habit_dialog(self):
+        win = tk.Toplevel(self.root)
+        win.title("New Habit")
+        win.geometry("460x520")
+        win.configure(bg="white")
+
+        form = tk.Frame(win, bg="white")
+        form.pack(padx=24, pady=18, fill="both", expand=True)
+
+        tk.Label(form, text="New Habit", bg="white", fg="#1f2937",
+                 font=("Helvetica", 17, "bold")).pack(anchor="w")
+
+        tk.Label(form, text="Habit name (e.g. Meditate 10 min)",
+                 bg="white", fg="#6b7280",
+                 font=("Helvetica", 11)).pack(anchor="w", pady=(14, 2))
+        name_entry = tk.Entry(form, width=40, font=("Helvetica", 11))
+        name_entry.pack(fill="x", ipady=4)
+
+        tk.Label(form, text="Goal (e.g. 10 minutes / day)",
+                 bg="white", fg="#6b7280",
+                 font=("Helvetica", 11)).pack(anchor="w", pady=(12, 2))
+        goal_entry = tk.Entry(form, width=40, font=("Helvetica", 11))
+        goal_entry.pack(fill="x", ipady=4)
+
+        tk.Label(form, text="Choose a flower", bg="white", fg="#6b7280",
+                 font=("Helvetica", 11)).pack(anchor="w", pady=(14, 4))
+
+        # flower tiles: click one to pick it, the picked one
+        # gets a green border
+        chosen = tk.StringVar()
+        tiles = {}
+
+        def choose(symbol):
+            chosen.set(symbol)
+            for s, t in tiles.items():
+                if s == symbol:          # picked: thick green border
+                    t.config(highlightbackground=GREEN,
+                             highlightthickness=2)
+                else:                    # not picked: thin grey border
+                    t.config(highlightbackground="#e5e7eb",
+                             highlightthickness=1)
+
+        flower_grid = tk.Frame(form, bg="white")
+        flower_grid.pack(anchor="w")
+        row, col = 0, 0
+        first_symbol = None
+        for f in self.repo.flowers():
+            if f["symbol"] == "wilted":
+                continue        # nobody wants to plant a wilted flower
+            if first_symbol is None:
+                first_symbol = f["symbol"]
+            tile = tk.Frame(flower_grid, bg="#f8fafc", padx=6, pady=5,
+                            highlightbackground="#e5e7eb",
+                            highlightthickness=1)
+            tile.grid(row=row, column=col, padx=4, pady=4)
+            tk.Label(tile, text=f["emoji"], bg="#f8fafc",
+                     font=("Helvetica", 18)).pack()
+            tk.Label(tile, text=f["label"], bg="#f8fafc", fg="#6b7280",
+                     font=("Helvetica", 9)).pack()
+            tile.bind("<Button-1>",
+                      lambda e, s=f["symbol"]: choose(s))
+            tiles[f["symbol"]] = tile
+            col += 1
+            if col == 5:        # five tiles per row, like the design
+                row, col = row + 1, 0
+        choose(first_symbol)     # the first flower is picked at the start
+
+        buttons = tk.Frame(win, bg="white")
+        buttons.pack(side="right", padx=24, pady=(0, 18))
+        cancel = tk.Label(buttons, text="Cancel", bg="white", fg="#1f2937",
+                          padx=16, pady=5, font=("Helvetica", 11),
+                          highlightbackground="#e5e7eb",
+                          highlightthickness=1)
+        cancel.pack(side="left", padx=6)
+        cancel.bind("<Button-1>", lambda e: win.destroy())
+        save = tk.Label(buttons, text="Save", bg=GREEN, fg="white",
+                        padx=16, pady=5, font=("Helvetica", 11, "bold"))
+        save.pack(side="left")
+        save.bind("<Button-1>",
+                  lambda e: self._save_new_habit(win, name_entry,
+                                                 goal_entry, chosen))
+
+    # read the form, check it is filled, save and close the window
+    def _save_new_habit(self, win, name_entry, goal_entry, chosen):
+        name = name_entry.get().strip()
+        if not name:            # nothing typed, so do not save
+            return
+        goal = goal_entry.get().strip()
+        if not goal:
+            goal = "Every day"
+        self.repo.add_habit(name, goal, chosen.get())
+        win.destroy()
+        self.refresh()
+
+    # open a window to edit the last 30 days of check-ins
+    def _history_dialog(self, habit):
+        win = tk.Toplevel(self.root)
+        win.title(f"{habit.name} - Last 30 days")
+        win.geometry("560x500")
+        win.configure(bg="white")
+
+        tk.Label(win, text="Last 30 days", bg="white", fg="#1f2937",
+                 font=("Helvetica", 17, "bold")).pack(anchor="w", padx=24,
+                                                      pady=(18, 0))
+        tk.Label(win, text=f"Tick a day to change {habit.name}'s check-in:",
+                 bg="white", fg="#6b7280",
+                 font=("Helvetica", 11)).pack(anchor="w", padx=24,
+                                              pady=(4, 8))
+
+        grid = tk.Frame(win, bg="white")
+        grid.pack(padx=20, pady=6)
+
+        # weekday header row: one column per weekday, Monday first
+        weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        for col, name in enumerate(weekdays):
+            tk.Label(grid, text=name, bg="white", fg="#9ca3af",
+                     font=("Helvetica", 9, "bold"),
+                     width=8).grid(row=0, column=col)
+
+        # collect the last 30 days, oldest first
+        today = date.today()
+        days = []
+        for i in range(29, -1, -1):
+            days.append(today - timedelta(days=i))
+
+        # put each day under its own weekday, pad the first week
+        row, col = 1, days[0].weekday()
+        for day in days:
+            day_str = day.isoformat()      # e.g. "2026-10-31"
+            var = tk.BooleanVar(
+                value=self.repo.is_checked_on(habit.id, day_str))
+            tk.Checkbutton(
+                grid, text=day.strftime("%m-%d"), variable=var,
+                bg="white", fg="#374151", activebackground="white",
+                font=("Helvetica", 10), anchor="w", width=8,
+                highlightthickness=0,
+                command=lambda h=habit, d=day_str, v=var:
+                    self._change_day(h, d, v.get())
+            ).grid(row=row, column=col, sticky="w", padx=3, pady=2)
+            col += 1
+            if col == 7:                    # week is full, new row
+                row, col = row + 1, 0
+
+        # big green "Close" button, same style as "Save"
+        buttons = tk.Frame(win, bg="white")
+        buttons.pack(side="right", padx=24, pady=(0, 18))
+        close = tk.Label(buttons, text="Close", bg=GREEN, fg="white",
+                         padx=20, pady=6, font=("Helvetica", 12, "bold"))
+        close.pack()
+        close.bind("<Button-1>", lambda e: win.destroy())
+
+    # save one day's check-in change and refresh the pages
+    def _change_day(self, habit, day, done):
+        self.repo.set_checked(habit.id, day, done)
         self.refresh()
 
     # redraw whichever page is showing

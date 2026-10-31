@@ -1,4 +1,4 @@
-# Ke-Habit-Garden
+# Habit Garden
 
 A habit-tracking app where every habit grows a flower — keep checking in and your garden blooms.
 
@@ -48,7 +48,6 @@ another Mac. Check-ins are stored in `~/Library/Application Support/HabitGarden`
 (seeded from `core/data/` on first launch).
 
 Notes:
-
 - The app is unsigned, so the first launch needs right-click → Open, or
   `xattr -dr com.apple.quarantine "dist/Habit Garden.app"`.
 - A build only runs on the same chip family it was built on (Apple Silicon

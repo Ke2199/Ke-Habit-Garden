@@ -20,7 +20,8 @@ class Habit:
 
     # figure out which flower picture to show from growth + streak
     def stage(self):
-        if self.streak == 0 and self.growth < 80:
+        # only show "wilt" if the habit had check-ins before
+        if self.streak == 0 and self.best_streak > 0 and self.growth < 80:
             return "wilt"
         if self.growth >= 70:
             return "bloom"

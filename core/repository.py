@@ -55,8 +55,7 @@ class GardenRepository:
 
     # is this habit already checked today?
     def is_checked(self, habit_id):
-        return bool(self._records.get(logic.today_str(), {})
-                    .get(str(habit_id)))
+        return self.is_checked_on(habit_id, logic.today_str())
 
     # numbers for the top stats bar
     def stats(self):
@@ -66,16 +65,45 @@ class GardenRepository:
 
     # mark one habit as done today, then save
     def check_in(self, habit_id):
-        day = self._records.setdefault(logic.today_str(), {})
-        day[str(habit_id)] = True
-        logic.recompute(self._habits[habit_id], self._records)
-        self._save_checkins()
-        self._save_habits()
+        self.set_checked(habit_id, logic.today_str(), True)
 
     # cancel today's check-in for one habit, then save
     def uncheck(self, habit_id):
-        day = self._records.get(logic.today_str(), {})
-        day.pop(str(habit_id), None)
+        self.set_checked(habit_id, logic.today_str(), False)
+
+    # add a new habit and save it to habits.json
+    def add_habit(self, name, target, flower_symbol):
+        # pick the next free id number
+        if self._habits:
+            new_id = max(self._habits) + 1
+        else:
+            new_id = 1
+        # ready-made spots in the garden, so flowers do not overlap
+        slots = [(50, 62), (20, 40), (70, 42), (58, 74),
+                 (36, 58), (84, 52), (26, 44), (50, 62)]
+        left, top = slots[len(self._habits) % len(slots)]
+        habit = Habit({
+            "id": new_id,
+            "name": name,
+            "target": target,
+            "flower_symbol": flower_symbol,
+            "created_at": logic.today_str(),
+            "pos": {"left": left, "top": top},
+        })
+        self._habits[new_id] = habit
+        self._save_habits()
+        return habit
+
+    # check whether a habit was done on one day, day like "2026-10-31"
+    def is_checked_on(self, habit_id, day):
+        return bool(self._records.get(day, {}).get(str(habit_id)))
+
+    # change one day's check-in and recalculate the habit
+    def set_checked(self, habit_id, day, done):
+        if done:
+            self._records.setdefault(day, {})[str(habit_id)] = True
+        else:
+            self._records.get(day, {}).pop(str(habit_id), None)
         logic.recompute(self._habits[habit_id], self._records)
         self._save_checkins()
         self._save_habits()
